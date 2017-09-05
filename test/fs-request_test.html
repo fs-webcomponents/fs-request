@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>fs-request test</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../fs-request.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <fs-request url="/basic-get"></fs-request>
+      </template>
+    </test-fixture>
+
+
+    <script>
+      suite('fs-request', function() {
+        
+        let server;
+
+        setup(function(){
+          server = sinon.fakeServer.create();
+          server.respondWith(
+            'GET',
+            '/basic-get',
+            [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{"persons":[{}]}'
+            ]
+          );
+        });
+
+        test('basic get request', function(done) {
+          var element = fixture('basic');
+          element.addEventListener('response', function(e){
+            assert(e.detail.response.data.persons.length === 1);
+            done();
+          });
+          setTimeout(function(){
+            server.respond();
+          }, 200);
+        });
+
+      });
+    </script>
+
+  </body>
+</html>
