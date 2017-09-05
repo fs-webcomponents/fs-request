@@ -40,7 +40,6 @@
         test('basic get request', function(done) {
           var element = fixture('basic');
           element.addEventListener('response', function(e){
-            console.dir(e.detail.response);
             assert(e.detail.response.data.persons.length === 1);
             done();
           });
