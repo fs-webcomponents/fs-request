@@ -15,7 +15,7 @@
 
     <test-fixture id="basic">
       <template>
-        <fs-request url="/basic-get"></fs-request>
+        <fs-request auto url="/basic-get"></fs-request>
       </template>
     </test-fixture>
 
@@ -25,7 +25,9 @@
         let server;
 
         setup(function(){
-          server = sinon.fakeServer.create();
+          server = sinon.fakeServer.create({
+            respondImmediately: true
+          });
           server.respondWith(
             'GET',
             /\/basic-get/,
@@ -43,9 +45,6 @@
             assert(e.detail.response.data.persons.length === 1);
             done();
           });
-          setTimeout(function(){
-            server.respond();
-          }, 200);
         });
 
       });
