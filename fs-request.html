@@ -1,123 +1,166 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../fs-client/fs-client.html">
-<link rel="import" href="../fs-behavior/fs-behavior.html">
 
-<dom-module id="fs-request">
-  <template>
-    <fs-client name="{{clientName}}"></fs-client>
-  </template>
-  <script>
-    /**
-     * `fs-request`
-     * 
-     *     <fs-request url="{{boundUrl}}" on-response="{{responseHandler}}"></fs-request>
-     * 
-     * @customElement
-     * @polymer
-     * @demo demo/index.html
-     */
-    class FSRequest extends Polymer.mixinBehaviors(FSBehavior, Polymer.Element) {
-      
-      static get is() { return 'fs-request'; }
-      
-      static get properties() {
-        return {
-          
-          /** Whether requests should automatically be issued when request parameters change */
-          auto: {
-            type: Boolean,
-            value: false
-          },
-          
-          url: String,
-          
-          // TODO: support method, params, headers, contentType
-          
-          /** Whether a request is in flight */
-          loading: {
-            type: Boolean,
-            value: false
-          },
-          
-          /** Whether the request has completed */
-          completed: {
-            type: Boolean,
-            value: false
-          },
-          
-          /** Whether the request has been sent */
-          sent: {
-            type: Boolean,
-            value: false
-          },
-          
-          /** Whether the request has succeeded */
-          succeeded: Boolean,
-          
-          /** Whether the request has failed */
-          failed: Boolean
-        };
-      }
-      
-      static get observers() {
-        return [
-          '_requestOptionsChanged(auto, url)'
-        ];
-      }
-      
-      generateRequest() {
-        this.loading = true;
-        this.sent = true; // Not entirely true; this is at least one tick before it was sent
+<script>
+  /**
+   * `fs-request`
+   * 
+   *     <fs-request url="{{boundUrl}}" on-response="{{responseHandler}}"></fs-request>
+   * 
+   * @customElement
+   * @polymer
+   * @demo demo/index.html
+   */
+  class FSRequest extends Polymer.Element {
+    
+    static get is() { return 'fs-request'; }
+    
+    static get properties() {
+      return {
         
-        this.getClient().get(this.url, (error, response) => {
-          
-          this.loading = false;
-          this.completed = true;
-          
-          if(error) {
-            this._handleError(error);
-          } else {
-            this._handleResponse(response);
-          }
-        });
-      }
-      
-      _handleResponse(response) {
-        this.failed = false;
-        this.succeeded = true;
-        this.fire('fs-request-response', { response }, {
-          bubbles: this.bubbles,
-          composed: true
-        });
-        this.fire('response', { response }, {
-          bubbles: this.bubbles,
-          composed: true
-        });
-      }
-      
-      _handleError(error) {
-        this.succeeded = false;
-        this.failed = true;
-        this.fire('fs-request-error', { error }, {
-          bubbles: this.bubbles,
-          composed: true
-        });
-        this.fire('error', { error }, {
-          bubbles: this.bubbles,
-          composed: true
-        });
-      }
-      
-      _requestOptionsChanged() {
-        if(this.url == null) {
-          return;
+        /** Whether requests should automatically be issued when request parameters change */
+        auto: {
+          type: Boolean,
+          value: false
+        },
+        
+        url: String,
+        
+        /** See fs-client name property for details */
+        clientName: String,
+        
+        // TODO: support method, params, headers, contentType
+        
+        /** Whether a request is in flight */
+        loading: {
+          type: Boolean,
+          value: false
+        },
+        
+        /** Whether the request has completed */
+        completed: {
+          type: Boolean,
+          value: false
+        },
+        
+        /** Whether the request has been sent */
+        sent: {
+          type: Boolean,
+          value: false
+        },
+        
+        /** Whether the request has succeeded */
+        succeeded: Boolean,
+        
+        /** Whether the request has failed */
+        failed: Boolean,
+        
+        /** fs-client element used to manage access to the sdk client */
+        _client: {
+          type: Object,
+          readOnly: true
         }
-        if(this.auto) {
-          this.generateRequest();
+      };
+    }
+    
+    static get observers() {
+      return [
+        '_requestOptionsChanged(auto, url)'
+      ];
+    }
+    
+    /**
+     * Get a reference to the SDK client
+     * 
+     * @return {Object} fs-js-lite sdk client
+     */
+    getClient() {
+      
+      // Create the internal fs-client element if it doesn't exist yet
+      if(!this._client) {
+        
+        // Call the special method for setting the readOnly _client property
+        this._set_client(document.createElement('fs-client'));
+        
+        // Set the name if necessary
+        if(this.clientName) {
+          this._client.name = this.clientName;
         }
+        
+        // We would prefer to just keep a reference to the element in memory
+        // and not attach it to the DOM (since we'll never reference or use it
+        // in the DOM) but Polymer property observers aren't fired until after
+        // the element is attached.
+        //
+        // https://github.com/Polymer/polymer/issues/4526
+        //
+        // We could try to force the fs-client to setup but that's creates an
+        // interface dependency that I don't want to maintain. fs-client is
+        // somewhat complex internaly with a simple external interface. I 
+        // to maintain the simple external interface so that we also maintain
+        // the freedom to refactor internally as needed.
+        this.appendChild(this._client);
+      }
+      
+      return this._client.client;
+    }
+    
+    generateRequest() {
+      this.loading = true;
+      this.sent = true; // Not entirely true; this is at least one tick before it was sent
+      
+      this.getClient().get(this.url, (error, response) => {
+        
+        this.loading = false;
+        this.completed = true;
+        
+        if(error) {
+          this._handleError(error);
+        } else {
+          this._handleResponse(response);
+        }
+      });
+    }
+    
+    _handleResponse(response) {
+      this.failed = false;
+      this.succeeded = true;
+      this.dispatchEvent(new CustomEvent('fs-request-response', {
+        detail: { response },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+      this.dispatchEvent(new CustomEvent('response', {
+        detail:  { response },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+    }
+    
+    _handleError(error) {
+      this.succeeded = false;
+      this.failed = true;
+      this.dispatchEvent(new CustomEvent('fs-request-error', {
+        detail: { error },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+      this.dispatchEvent(new CustomEvent('error', {
+        detail: { error },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+    }
+    
+    _requestOptionsChanged() {
+      if(this.url == null) {
+        return;
+      }
+      if(this.auto) {
+        this.generateRequest();
       }
     }
-  
-    window.customElements.define(FSRequest.is, FSRequest);
-  </script>
-</dom-module>
+  }
+
+  window.customElements.define(FSRequest.is, FSRequest);
+</script>
