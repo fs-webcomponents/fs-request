@@ -1,6 +1,12 @@
 {
   "name": "fs-request",
   "main": "fs-request.html",
+  "version": "3.0.0",
+  "keywords": [
+    "web-component",
+    "polymer",
+    "FamilySearch"
+  ],
   "dependencies": {
     "polymer": "Polymer/polymer#^2.0.0",
     "fs-client": "fs-webcomponents/fs-client#^3.0.0",
