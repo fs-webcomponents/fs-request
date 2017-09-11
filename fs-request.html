@@ -1,10 +1,10 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../fs-client/fs-client.html">
-<link rel="import" href="../fs-behavior/fs-behavior.html">
+<link rel="import" href="../fs-api-aware/fs-api-aware.html">
 
 <dom-module id="fs-request">
   <template>
-    <fs-client name="{{clientName}}"></fs-client>
+    <fs-client id="client" name="{{clientName}}"></fs-client>
   </template>
   <script>
     /**
@@ -16,7 +16,37 @@
      * @polymer
      * @demo demo/index.html
      */
-    class FSRequest extends Polymer.mixinBehaviors(FSBehavior, Polymer.Element) {
+    class FSRequest extends FSApiAwareMixin(Polymer.Element) {
+      
+      /**
+       * Fired when a response is received from the API
+       *
+       * @event fs-request-response
+       * @param {Object} data
+       * @param {Object} data.response API response
+       */
+      /**
+       * Fired when a response is received from the API
+       *
+       * @event response
+       * @param {Object} data
+       * @param {Object} data.response API response
+       */
+       
+      /**
+       * Fired when an API request fails (network errors only)
+       *
+       * @event fs-request-error
+       * @param {Object} data
+       * @param {Object} data.error error
+       */
+      /**
+       * Fired when an API request fails (network errors only)
+       *
+       * @event error
+       * @param {Object} data
+       * @param {Object} data.error error
+       */
       
       static get is() { return 'fs-request'; }
       
@@ -65,6 +95,10 @@
         ];
       }
       
+      getClient() {
+        return this.$.client.client;
+      }
+      
       generateRequest() {
         this.loading = true;
         this.sent = true; // Not entirely true; this is at least one tick before it was sent
@@ -85,27 +119,31 @@
       _handleResponse(response) {
         this.failed = false;
         this.succeeded = true;
-        this.fire('fs-request-response', { response }, {
+        this.dispatchEvent(new CustomEvent('fs-request-response', {
+          detail: { response },
           bubbles: this.bubbles,
           composed: true
-        });
-        this.fire('response', { response }, {
+        }));
+        this.dispatchEvent(new CustomEvent('response', {
+          detail:  { response },
           bubbles: this.bubbles,
           composed: true
-        });
+        }));
       }
       
       _handleError(error) {
         this.succeeded = false;
         this.failed = true;
-        this.fire('fs-request-error', { error }, {
+        this.dispatchEvent(new CustomEvent('fs-request-error', {
+          detail: { error },
           bubbles: this.bubbles,
           composed: true
-        });
-        this.fire('error', { error }, {
+        }));
+        this.dispatchEvent(new CustomEvent('error', {
+          detail: { error },
           bubbles: this.bubbles,
           composed: true
-        });
+        }));
       }
       
       _requestOptionsChanged() {

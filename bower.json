@@ -9,8 +9,8 @@
   ],
   "dependencies": {
     "polymer": "Polymer/polymer#^2.0.0",
-    "fs-client": "fs-webcomponents/fs-client#^3.0.0",
-    "fs-behavior": "fs-webcomponents/fs-behavior#^3.0.0"
+    "fs-client": "fs-webcomponents/fs-client#v4",
+    "fs-api-aware": "fs-webcomponents/fs-api-aware"
   },
   "devDependencies": {
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
