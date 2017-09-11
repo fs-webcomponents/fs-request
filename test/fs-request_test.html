@@ -43,6 +43,11 @@
           var element = fixture('basic');
           element.addEventListener('response', function(e){
             assert(e.detail.response.data.persons.length === 1);
+            assert(element.sent);
+            assert(element.succeeded);
+            assert(element.succeeded);
+            assert(!element.loading);
+            assert(!element.failed);
             done();
           });
         });

@@ -66,26 +66,40 @@
           /** Whether a request is in flight */
           loading: {
             type: Boolean,
-            value: false
+            value: false,
+            readOnly: true,
+            notify: true
           },
           
           /** Whether the request has completed */
           completed: {
             type: Boolean,
-            value: false
+            value: false,
+            readOnly: true,
+            notify: true
           },
           
           /** Whether the request has been sent */
           sent: {
             type: Boolean,
-            value: false
+            value: false,
+            readOnly: true,
+            notify: true
           },
           
           /** Whether the request has succeeded */
-          succeeded: Boolean,
+          succeeded: {
+            type: Boolean,
+            readOnly: true,
+            notify: true
+          },
           
           /** Whether the request has failed */
-          failed: Boolean
+          failed: {
+            type: Boolean,
+            readOnly: true,
+            notify: true
+          }
         };
       }
       
@@ -100,13 +114,13 @@
       }
       
       generateRequest() {
-        this.loading = true;
-        this.sent = true; // Not entirely true; this is at least one tick before it was sent
+        this._setLoading(true);
+        this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
         
         this.getClient().get(this.url, (error, response) => {
           
-          this.loading = false;
-          this.completed = true;
+          this._setLoading(false);
+          this._setCompleted(true);
           
           if(error) {
             this._handleError(error);
@@ -117,8 +131,8 @@
       }
       
       _handleResponse(response) {
-        this.failed = false;
-        this.succeeded = true;
+        this._setFailed(false);
+        this._setSucceeded(true);
         this.dispatchEvent(new CustomEvent('fs-request-response', {
           detail: { response },
           bubbles: this.bubbles,
@@ -132,8 +146,8 @@
       }
       
       _handleError(error) {
-        this.succeeded = false;
-        this.failed = true;
+        this._setSucceeded(false);
+        this._setFailed(true);
         this.dispatchEvent(new CustomEvent('fs-request-error', {
           detail: { error },
           bubbles: this.bubbles,
