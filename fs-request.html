@@ -2,174 +2,180 @@
 <link rel="import" href="../fs-client/fs-client.html">
 <link rel="import" href="../fs-api-aware/fs-api-aware.html">
 
-<dom-module id="fs-request">
-  <template>
-    <fs-client id="client" name="{{clientName}}"></fs-client>
-  </template>
-  <script>
+<script>
+  /**
+   * `fs-request`
+   * 
+   *     <fs-request url="{{boundUrl}}" on-response="{{responseHandler}}"></fs-request>
+   * 
+   * @customElement
+   * @polymer
+   * @demo demo/index.html
+   */
+  class FSRequest extends FSApiAwareMixin(Polymer.Element) {
+    
     /**
-     * `fs-request`
-     * 
-     *     <fs-request url="{{boundUrl}}" on-response="{{responseHandler}}"></fs-request>
-     * 
-     * @customElement
-     * @polymer
-     * @demo demo/index.html
+     * Fired when a response is received from the API
+     *
+     * @event fs-request-response
+     * @param {Object} data
+     * @param {Object} data.response API response
      */
-    class FSRequest extends FSApiAwareMixin(Polymer.Element) {
-      
-      /**
-       * Fired when a response is received from the API
-       *
-       * @event fs-request-response
-       * @param {Object} data
-       * @param {Object} data.response API response
-       */
-      /**
-       * Fired when a response is received from the API
-       *
-       * @event response
-       * @param {Object} data
-       * @param {Object} data.response API response
-       */
-       
-      /**
-       * Fired when an API request fails (network errors only)
-       *
-       * @event fs-request-error
-       * @param {Object} data
-       * @param {Object} data.error error
-       */
-      /**
-       * Fired when an API request fails (network errors only)
-       *
-       * @event error
-       * @param {Object} data
-       * @param {Object} data.error error
-       */
-      
-      static get is() { return 'fs-request'; }
-      
-      static get properties() {
-        return {
-          
-          /** Whether requests should automatically be issued when request parameters change */
-          auto: {
-            type: Boolean,
-            value: false
-          },
-          
-          url: String,
-          
-          // TODO: support method, params, headers, contentType
-          
-          /** Whether a request is in flight */
-          loading: {
-            type: Boolean,
-            value: false,
-            readOnly: true,
-            notify: true
-          },
-          
-          /** Whether the request has completed */
-          completed: {
-            type: Boolean,
-            value: false,
-            readOnly: true,
-            notify: true
-          },
-          
-          /** Whether the request has been sent */
-          sent: {
-            type: Boolean,
-            value: false,
-            readOnly: true,
-            notify: true
-          },
-          
-          /** Whether the request has succeeded */
-          succeeded: {
-            type: Boolean,
-            readOnly: true,
-            notify: true
-          },
-          
-          /** Whether the request has failed */
-          failed: {
-            type: Boolean,
-            readOnly: true,
-            notify: true
-          }
-        };
-      }
-      
-      static get observers() {
-        return [
-          '_requestOptionsChanged(auto, url)'
-        ];
-      }
-      
-      getClient() {
-        return this.$.client.client;
-      }
-      
-      generateRequest() {
-        this._setLoading(true);
-        this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
+    /**
+     * Fired when a response is received from the API
+     *
+     * @event response
+     * @param {Object} data
+     * @param {Object} data.response API response
+     */
+     
+    /**
+     * Fired when an API request fails (network errors only)
+     *
+     * @event fs-request-error
+     * @param {Object} data
+     * @param {Object} data.error error
+     */
+    /**
+     * Fired when an API request fails (network errors only)
+     *
+     * @event error
+     * @param {Object} data
+     * @param {Object} data.error error
+     */
+    
+    static get is() { return 'fs-request'; }
+    
+    static get properties() {
+      return {
         
-        this.getClient().get(this.url, (error, response) => {
-          
-          this._setLoading(false);
-          this._setCompleted(true);
-          
-          if(error) {
-            this._handleError(error);
-          } else {
-            this._handleResponse(response);
-          }
-        });
-      }
-      
-      _handleResponse(response) {
-        this._setFailed(false);
-        this._setSucceeded(true);
-        this.dispatchEvent(new CustomEvent('fs-request-response', {
-          detail: { response },
-          bubbles: this.bubbles,
-          composed: true
-        }));
-        this.dispatchEvent(new CustomEvent('response', {
-          detail:  { response },
-          bubbles: this.bubbles,
-          composed: true
-        }));
-      }
-      
-      _handleError(error) {
-        this._setSucceeded(false);
-        this._setFailed(true);
-        this.dispatchEvent(new CustomEvent('fs-request-error', {
-          detail: { error },
-          bubbles: this.bubbles,
-          composed: true
-        }));
-        this.dispatchEvent(new CustomEvent('error', {
-          detail: { error },
-          bubbles: this.bubbles,
-          composed: true
-        }));
-      }
-      
-      _requestOptionsChanged() {
-        if(this.url == null) {
-          return;
+        /** Whether requests should automatically be issued when request parameters change */
+        auto: {
+          type: Boolean,
+          value: false
+        },
+        
+        url: String,
+        
+        // TODO: support method, params, headers, contentType
+        
+        /** Whether a request is in flight */
+        loading: {
+          type: Boolean,
+          value: false,
+          readOnly: true,
+          notify: true
+        },
+        
+        /** Whether the request has completed */
+        completed: {
+          type: Boolean,
+          value: false,
+          readOnly: true,
+          notify: true
+        },
+        
+        /** Whether the request has been sent */
+        sent: {
+          type: Boolean,
+          value: false,
+          readOnly: true,
+          notify: true
+        },
+        
+        /** Whether the request has succeeded */
+        succeeded: {
+          type: Boolean,
+          readOnly: true,
+          notify: true
+        },
+        
+        /** Whether the request has failed */
+        failed: {
+          type: Boolean,
+          readOnly: true,
+          notify: true
         }
-        if(this.auto) {
-          this.generateRequest();
+      };
+    }
+    
+    static get observers() {
+      return [
+        '_requestOptionsChanged(auto, url)'
+      ];
+    }
+    
+    constructor() {
+      super();
+      this.client = document.createElement('fs-client');
+      this.client.name = this.clientName;
+      // Here we could force the client to initialize but instead we lazily
+      // defer until we actually need it (first time getClient() is called).
+    }
+    
+    getClient() {
+      if(!this.client.client) {
+        this.client._configureClient();
+      }
+      return this.client.client;
+    }
+    
+    generateRequest() {
+      this._setLoading(true);
+      this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
+      
+      this.getClient().get(this.url, (error, response) => {
+        
+        this._setLoading(false);
+        this._setCompleted(true);
+        
+        if(error) {
+          this._handleError(error);
+        } else {
+          this._handleResponse(response);
         }
+      });
+    }
+    
+    _handleResponse(response) {
+      this._setFailed(false);
+      this._setSucceeded(true);
+      this.dispatchEvent(new CustomEvent('fs-request-response', {
+        detail: { response },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+      this.dispatchEvent(new CustomEvent('response', {
+        detail:  { response },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+    }
+    
+    _handleError(error) {
+      this._setSucceeded(false);
+      this._setFailed(true);
+      this.dispatchEvent(new CustomEvent('fs-request-error', {
+        detail: { error },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+      this.dispatchEvent(new CustomEvent('error', {
+        detail: { error },
+        bubbles: this.bubbles,
+        composed: true
+      }));
+    }
+    
+    _requestOptionsChanged() {
+      if(this.url == null) {
+        return;
+      }
+      if(this.auto) {
+        this.generateRequest();
       }
     }
-  
-    window.customElements.define(FSRequest.is, FSRequest);
-  </script>
-</dom-module>
+  }
+
+  window.customElements.define(FSRequest.is, FSRequest);
+</script>

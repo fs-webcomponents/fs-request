@@ -51,6 +51,21 @@
             done();
           });
         });
+        
+        test('use without attaching to the DOM', function(done){
+          var element = new FSRequest();
+          element.addEventListener('response', function(e){
+            assert(e.detail.response.data.persons.length === 1);
+            assert(element.sent);
+            assert(element.succeeded);
+            assert(element.succeeded);
+            assert(!element.loading);
+            assert(!element.failed);
+            done();
+          });
+          element.url = '/basic-get';
+          element.generateRequest();
+        });
 
       });
     </script>
