@@ -55,6 +55,12 @@
           value: false
         },
         
+        /** Only issue requests if the SDK client is authenticated */
+        requireAuthentication: {
+          type: Boolean,
+          value: false
+        },
+        
         url: String,
         
         // TODO: support method, params, headers, contentType
@@ -95,6 +101,15 @@
           type: Boolean,
           readOnly: true,
           notify: true
+        },
+        
+        /** 
+         * Used when `requireAuthentication` is enabled to track whether 
+         * generateRequest() was called when the client wasn't authenticated
+         */
+        _requestDeferred: {
+          type: Boolean,
+          value: false
         }
       };
     }
@@ -107,24 +122,32 @@
     
     constructor() {
       super();
-      this.client = document.createElement('fs-client');
-      this.client.name = this.clientName;
-      // Here we could force the client to initialize but instead we lazily
-      // defer until we actually need it (first time getClient() is called).
     }
     
-    getClient() {
-      if(!this.client.client) {
-        this.client._configureClient();
-      }
+    _getClient() {
       return this.client.client;
     }
     
+    _ensureClient() {
+      if(!this.client) {
+        this.client = document.createElement('fs-client');
+        this.client.name = this.clientName;
+        this.client.ready();
+      }
+    }
+    
     generateRequest() {
+      this._ensureClient();
+      
+      if(this.requireAuthentication && !this.client.authenticated) {
+        this._deferRequest();
+        return;
+      }
+      
       this._setLoading(true);
       this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
       
-      this.getClient().get(this.url, (error, response) => {
+      this._getClient().get(this.url, (error, response) => {
         
         this._setLoading(false);
         this._setCompleted(true);
@@ -174,6 +197,21 @@
       if(this.auto) {
         this.generateRequest();
       }
+    }
+    
+    /**
+     * Defer the request until the client is authenticated. Used when
+     * `requireAuthentication` is enabled.
+     */
+    _deferRequest() {
+      this._requestDeferred = true;
+      var listener = (e) => {
+        if(e.detail.value) {
+          this.client.removeEventListener('authenticated-changed', listener);
+          this.generateRequest();
+        }
+      };
+      this.client.addEventListener('authenticated-changed', listener);
     }
   }
 

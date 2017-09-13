@@ -18,6 +18,12 @@
         <fs-request auto url="/basic-get"></fs-request>
       </template>
     </test-fixture>
+    
+    <test-fixture id="require-auth">
+      <template>
+        <fs-request auto url="/basic-get" client-name="req-auth" require-authentication></fs-request>
+      </template>
+    </test-fixture>
 
     <script>
       suite('fs-request', function() {
@@ -38,16 +44,11 @@
             ]
           );
         });
-
+        
         test('basic get request', function(done) {
           var element = fixture('basic');
           element.addEventListener('response', function(e){
-            assert(e.detail.response.data.persons.length === 1);
-            assert(element.sent);
-            assert(element.succeeded);
-            assert(element.succeeded);
-            assert(!element.loading);
-            assert(!element.failed);
+            validateResponse(element, e);
             done();
           });
         });
@@ -55,18 +56,45 @@
         test('use without attaching to the DOM', function(done){
           var element = new FSRequest();
           element.addEventListener('response', function(e){
-            assert(e.detail.response.data.persons.length === 1);
-            assert(element.sent);
-            assert(element.succeeded);
-            assert(element.succeeded);
-            assert(!element.loading);
-            assert(!element.failed);
+            validateResponse(element, e);
             done();
           });
           element.url = '/basic-get';
           element.generateRequest();
         });
-
+        
+        test('requireAuthentication', function(done){
+          var element = fixture('require-auth');
+          
+          // Test that a request hasn't been sent even though `auto` is enabled
+          assert(element.requireAuthentication);
+          assert(!element.sent);
+          assert(!element.loading);
+          assert(!element.completed);
+          
+          // Listen for a response which means the request was sent after the
+          // client was authenticated (which we do next)
+          element.addEventListener('response', function(e){
+            validateResponse(element, e);
+            done();
+          });
+          
+          // Set an access token on the client to make it authenticated
+          var client = document.createElement('fs-client');
+          client.name = 'req-auth';
+          client.accessToken = 'token';
+          client.configureClient();
+        });
+        
+        function validateResponse(element, event) {
+          assert(event.detail.response.data.persons.length === 1);
+          assert(element.sent);
+          assert(element.succeeded);
+          assert(element.succeeded);
+          assert(!element.loading);
+          assert(!element.failed);
+          assert(element.completed);
+        }
       });
     </script>
 
