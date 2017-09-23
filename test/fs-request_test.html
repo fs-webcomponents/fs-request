@@ -19,6 +19,18 @@
       </template>
     </test-fixture>
     
+    <test-fixture id="post">
+      <template>
+        <fs-request auto method="post" url="/post"></fs-request>
+      </template>
+    </test-fixture>
+    
+    <test-fixture id="headers">
+      <template>
+        <fs-request auto url="/headers"></fs-request>
+      </template>
+    </test-fixture>
+    
     <test-fixture id="require-auth">
       <template>
         <fs-request auto url="/basic-get" client-name="req-auth" require-authentication></fs-request>
@@ -43,12 +55,22 @@
               '{"persons":[{}]}'
             ]
           );
+          server.respondWith(
+            'POST',
+            /\/post/,
+            [
+              201,
+              { 'Content-Type': 'application/json' },
+              ''
+            ]
+          );
         });
         
-        test('basic get request', function(done) {
+        test('basic GET', function(done) {
           var element = fixture('basic');
           element.addEventListener('response', function(e){
-            validateResponse(element, e);
+            validateResponseState(element);
+            assert(event.detail.response.data.persons.length === 1);
             done();
           });
         });
@@ -56,12 +78,25 @@
         test('use without attaching to the DOM', function(done){
           var element = new FSRequest();
           element.addEventListener('response', function(e){
-            validateResponse(element, e);
+            validateResponseState(element);
+            assert(event.detail.response.data.persons.length === 1);
             done();
           });
           element.url = '/basic-get';
           element.generateRequest();
         });
+        
+        test('POST', function(done){
+          var element = fixture('post');
+          element.addEventListener('response', function(e){
+            validateResponseState(element);
+            expect(e.detail.response.statusCode).to.equal(201);
+            done();
+          });
+        });
+        
+        // I don't think we can test headers with sinon
+        test('headers');
         
         test('requireAuthentication', function(done){
           var element = fixture('require-auth');
@@ -75,7 +110,8 @@
           // Listen for a response which means the request was sent after the
           // client was authenticated (which we do next)
           element.addEventListener('response', function(e){
-            validateResponse(element, e);
+            validateResponseState(element);
+            assert(event.detail.response.data.persons.length === 1);
             done();
           });
           
@@ -86,8 +122,7 @@
           client.configureClient();
         });
         
-        function validateResponse(element, event) {
-          assert(event.detail.response.data.persons.length === 1);
+        function validateResponseState(element) {
           assert(element.sent);
           assert(element.succeeded);
           assert(element.succeeded);

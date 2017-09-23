@@ -63,7 +63,16 @@
         
         url: String,
         
-        // TODO: support method, params, headers, contentType
+        /** HTTP method */
+        method: {
+          type: String,
+          value: 'GET'
+        },
+        
+        /* Map of HTTP headers */
+        headers: Object,
+        
+        // TODO: support method, headers
         
         /** Whether a request is in flight */
         loading: {
@@ -144,10 +153,17 @@
         return;
       }
       
+      const options = {
+        method: this.method
+      };
+      if(this.headers) {
+        options.headers = this.headers;
+      }
+      
       this._setLoading(true);
       this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
       
-      this._getClient().get(this.url, (error, response) => {
+      this._getClient().request(this.url, options, (error, response) => {
         
         this._setLoading(false);
         this._setCompleted(true);
