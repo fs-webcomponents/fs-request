@@ -72,7 +72,8 @@
         /* Map of HTTP headers */
         headers: Object,
         
-        // TODO: support method, headers
+        /* Request body; JSON object */
+        body: Object,
         
         /** Whether a request is in flight */
         loading: {
@@ -158,6 +159,9 @@
       };
       if(this.headers) {
         options.headers = this.headers;
+      }
+      if(this.body) {
+        options.body = this.body;
       }
       
       this._setLoading(true);
