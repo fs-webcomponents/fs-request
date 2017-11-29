@@ -167,15 +167,15 @@
       this._setSent(true); // Not entirely true; this is at least one tick before it was actually sent
       
       this._getClient().request(this.url, options, (error, response) => {
-        
         this._setLoading(false);
-        this._setCompleted(true);
-        
         if(error) {
           this._handleError(error);
         } else {
           this._handleResponse(response);
         }
+        // The last thing we do is mark as completed so that event listeners
+        // know we're all done when we say we're all done.
+        this._setCompleted(true);
       });
     }
     
