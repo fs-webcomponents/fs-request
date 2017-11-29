@@ -142,6 +142,9 @@
       }
     }
     
+    /**
+     * Finalize and execute the API request
+     */
     generateRequest() {
       this._ensureClient();
       
@@ -179,29 +182,21 @@
     _handleResponse(response) {
       this._setFailed(false);
       this._setSucceeded(true);
-      this.dispatchEvent(new CustomEvent('fs-request-response', {
-        detail: { response },
-        bubbles: this.bubbles,
-        composed: true
-      }));
-      this.dispatchEvent(new CustomEvent('response', {
-        detail:  { response },
-        bubbles: this.bubbles,
-        composed: true
-      }));
+      this._fireEvent('fs-request-response', { response });
+      this._fireEvent('response', { response });
     }
     
     _handleError(error) {
       this._setSucceeded(false);
       this._setFailed(true);
-      this.dispatchEvent(new CustomEvent('fs-request-error', {
-        detail: { error },
-        bubbles: this.bubbles,
-        composed: true
-      }));
-      this.dispatchEvent(new CustomEvent('error', {
-        detail: { error },
-        bubbles: this.bubbles,
+      this._fireEvent('fs-request-error', { error });
+      this._fireEvent('error', { error });
+    }
+    
+    _fireEvent(name, detail) {
+      this.dispatchEvent(new CustomEvent(name, {
+        detail,
+        bubbles: true,
         composed: true
       }));
     }
