@@ -179,6 +179,21 @@
       });
     }
     
+    /**
+     * When using fs-request in JavaScript without ever attaching it to the DOM,
+     * events will not propagate. This is often undesired. To avoid this problem
+     * you may call this method passing a DOM node as the `element` parameter to
+     * have this request element attached to the given element for the duration
+     * of the request so that events may propagate through the given element.
+     * Do not use this method on fs-request elements that are in the DOM.
+     */
+    delegateEvents(element) {
+      element.appendChild(this);
+      this.addEventListener('completed-changed', () => {
+        this.remove();
+      });
+    }
+    
     _handleResponse(response) {
       this._setFailed(false);
       this._setSucceeded(true);
